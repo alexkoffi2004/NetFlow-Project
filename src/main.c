@@ -3,15 +3,8 @@
 #include "graphe.h"
 #include "liste_chainee.h"
 #include "dijkstra.h"
-#include "bellman_ford.h"
-#include "k_plus_courts.h"
 #include "backtracking.h"
 #include "securite.h"
-#include "detection_cycles.h"
-#include "tarjan.h"
-#include "file_priorite.h"
-#include "simulation_paquets.h"
-#include "routage_contraintes.h"
 #include "utils.h"
 
 void afficher_menu_principal() {
@@ -150,13 +143,17 @@ int main() {
                         destination >= 0 && destination < graphe->nb_sommets) {
                         
                         clock_t debut = clock();
-                        BellmanFordResult* resultat = bellman_ford(graphe, source, destination);
+                        CheminResult* resultat = bellman_ford(graphe, source, destination);
                         clock_t fin = clock();
                         
                         if (resultat) {
-                            afficher_resultat_bellman_ford(resultat, source, destination);
+                            if (resultat->a_cycle_negatif) {
+                                printf("\n[ALERTE] Cycle negatif detecte!\n");
+                            } else {
+                                afficher_chemin(resultat, source, destination);
+                            }
                             printf("Temps: %.4f secondes\n", get_temps_execution(debut, fin));
-                            liberer_bellman_ford(resultat);
+                            liberer_chemin(resultat);
                         }
                     } else {
                         afficher_erreur("Sommets invalides.");
@@ -240,7 +237,7 @@ int main() {
                 } else {
                     int nb_points;
                     clock_t debut = clock();
-                    int* points = identifier_points_articulation(graphe, &nb_points);
+                    int* points = identifier_points_critiques(graphe, &nb_points);
                     clock_t fin = clock();
                     
                     printf("\n=== Points d'Articulation (Nuds Critiques) ===\n");
@@ -358,7 +355,7 @@ int main() {
                         clock_t fin_d = clock();
                         
                         clock_t debut_b = clock();
-                        BellmanFordResult* res_b = bellman_ford(graphe, source, destination);
+                        CheminResult* res_b = bellman_ford(graphe, source, destination);
                         clock_t fin_b = clock();
                         
                         printf("\nDijkstra:\n");
@@ -370,7 +367,7 @@ int main() {
                         printf("  Temps: %.6f secondes\n", get_temps_execution(debut_b, fin_b));
                         
                         if (res_d) liberer_chemin(res_d);
-                        if (res_b) liberer_bellman_ford(res_b);
+                        if (res_b) liberer_chemin(res_b);
                     }
                 }
                 break;
