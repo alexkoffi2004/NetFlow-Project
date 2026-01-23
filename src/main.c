@@ -113,8 +113,8 @@ int main() {
                     int source = lire_entier("Sommet source: ");
                     int destination = lire_entier("Sommet destination: ");
                     
-                    if (source >= 0 && source < graphe->nb_sommets && 
-                        destination >= 0 && destination < graphe->nb_sommets) {
+                    if (source >= 0 && source < graphe->nb_noeuds && 
+                        destination >= 0 && destination < graphe->nb_noeuds) {
                         
                         clock_t debut = clock();
                         CheminResult* resultat = dijkstra(graphe, source, destination);
@@ -139,8 +139,8 @@ int main() {
                     int source = lire_entier("Sommet source: ");
                     int destination = lire_entier("Sommet destination: ");
                     
-                    if (source >= 0 && source < graphe->nb_sommets && 
-                        destination >= 0 && destination < graphe->nb_sommets) {
+                    if (source >= 0 && source < graphe->nb_noeuds && 
+                        destination >= 0 && destination < graphe->nb_noeuds) {
                         
                         clock_t debut = clock();
                         CheminResult* resultat = bellman_ford(graphe, source, destination);
@@ -170,8 +170,8 @@ int main() {
                     int destination = lire_entier("Sommet destination: ");
                     int k = lire_entier("Nombre de chemins (K): ");
                     
-                    if (source >= 0 && source < graphe->nb_sommets && 
-                        destination >= 0 && destination < graphe->nb_sommets && k > 0) {
+                    if (source >= 0 && source < graphe->nb_noeuds && 
+                        destination >= 0 && destination < graphe->nb_noeuds && k > 0) {
                         
                         clock_t debut = clock();
                         KCheminsResult* resultat = k_plus_courts_chemins(graphe, source, destination, k);
@@ -294,12 +294,12 @@ int main() {
             
             case 13: {
                 printf("\n=== Test de la File de Priorite ===\n");
-                FilePriorite* file = creer_file_priorite(10);
+                FileAttente* file = creer_file_priorite(10);
                 
-                enqueue(file, 1, 5, 1024, 0.0);
-                enqueue(file, 2, 8, 512, 0.1);
-                enqueue(file, 3, 3, 2048, 0.2);
-                enqueue(file, 4, 9, 256, 0.3);
+                enqueue(file, 1, 5, 0.001024, 0, 1, 0.0);
+                enqueue(file, 2, 8, 0.000512, 0, 1, 0.1);
+                enqueue(file, 3, 3, 0.002048, 0, 1, 0.2);
+                enqueue(file, 4, 9, 0.000256, 0, 1, 0.3);
                 
                 afficher_file(file);
                 
@@ -345,8 +345,8 @@ int main() {
                     int source = lire_entier("Sommet source: ");
                     int destination = lire_entier("Sommet destination: ");
                     
-                    if (source >= 0 && source < graphe->nb_sommets && 
-                        destination >= 0 && destination < graphe->nb_sommets) {
+                    if (source >= 0 && source < graphe->nb_noeuds && 
+                        destination >= 0 && destination < graphe->nb_noeuds) {
                         
                         printf("\n=== Comparaison Dijkstra vs Bellman-Ford ===\n");
                         

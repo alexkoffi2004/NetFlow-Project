@@ -34,22 +34,24 @@ typedef struct CheminContraint {
 typedef struct Paquet {
     int id;
     int priorite;
-    int taille;
+    float taille_Mo;
+    int source;
+    int destination;
     double temps_arrivee;
     double temps_traitement;
-    struct Paquet* suivant;
     struct Paquet* precedent;
+    struct Paquet* suivant;
 } Paquet;
 
-typedef struct FilePriorite {
+typedef struct FileAttente {
     Paquet* tete;
     Paquet* queue;
-    int taille;
+    int taille_actuelle;
     int capacite_max;
     int paquets_perdus;
     int paquets_traites;
     double temps_attente_total;
-} FilePriorite;
+} FileAttente;
 
 typedef struct StatistiquesSimulation {
     double temps_attente_moyen;
@@ -72,14 +74,14 @@ CheminContraint* trouver_chemin_avec_contraintes(Graphe* g, int source, int dest
 void afficher_chemin_contraint(CheminContraint* chemin);
 void liberer_chemin_contraint(CheminContraint* chemin);
 
-FilePriorite* creer_file_priorite(int capacite_max);
-int enqueue(FilePriorite* file, int id, int priorite, int taille, double temps_arrivee);
-Paquet* dequeue(FilePriorite* file);
-Paquet* peek(FilePriorite* file);
-int est_vide_file(FilePriorite* file);
-int est_pleine_file(FilePriorite* file);
-void afficher_file(FilePriorite* file);
-void liberer_file_priorite(FilePriorite* file);
+FileAttente* creer_file_priorite(int capacite_max);
+int enqueue(FileAttente* file, int id, int priorite, float taille_Mo, int source, int destination, double temps_arrivee);
+Paquet* dequeue(FileAttente* file);
+Paquet* peek(FileAttente* file);
+int est_vide_file(FileAttente* file);
+int est_pleine_file(FileAttente* file);
+void afficher_file(FileAttente* file);
+void liberer_file_priorite(FileAttente* file);
 
 StatistiquesSimulation* simuler_flux_paquets(Graphe* g, int source, int destination, int nb_paquets, int capacite_file);
 void afficher_statistiques_simulation(StatistiquesSimulation* stats);

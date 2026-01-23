@@ -6,27 +6,28 @@
 
 typedef struct Arete {
     int destination;
-    int latence;
-    int bande_passante;
-    int cout;
+    float latence;
+    float bande_passante;
+    float cout;
     int securite;
-    int debit;
+    float debit;
     struct Arete* suivant;
 } Arete;
 
-typedef struct Sommet {
+typedef struct Noeud {
     int id;
     char nom[50];
     Arete* aretes;
-} Sommet;
+} Noeud;
 
 typedef struct Graphe {
-    int nb_sommets;
-    Sommet* sommets;
+    int nb_noeuds;
+    Noeud* noeuds;
+    float** matrice_adjacence;
 } Graphe;
 
-Graphe* creer_graphe(int nb_sommets);
-void ajouter_arete(Graphe* g, int source, int dest, int latence, int bande_passante, int cout, int securite);
+Graphe* creer_graphe(int nb_noeuds);
+void ajouter_arete(Graphe* g, int source, int dest, float latence, float bande_passante, float cout, int securite);
 void supprimer_arete(Graphe* g, int source, int dest);
 void supprimer_sommet(Graphe* g, int sommet);
 void afficher_graphe(Graphe* g);

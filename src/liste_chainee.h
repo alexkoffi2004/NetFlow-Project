@@ -4,13 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct Noeud {
+typedef struct NoeudListe {
     int valeur;
-    struct Noeud* suivant;
-} Noeud;
+    struct NoeudListe* suivant;
+} NoeudListe;
 
 typedef struct Liste {
-    Noeud* tete;
+    NoeudListe* tete;
     int taille;
 } Liste;
 

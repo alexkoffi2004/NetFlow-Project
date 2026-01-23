@@ -12,7 +12,7 @@ Liste* creer_liste() {
 void ajouter_debut(Liste* liste, int valeur) {
     if (!liste) return;
     
-    Noeud* nouveau = (Noeud*)malloc(sizeof(Noeud));
+    NoeudListe* nouveau = (NoeudListe*)malloc(sizeof(NoeudListe));
     if (!nouveau) return;
     
     nouveau->valeur = valeur;
@@ -24,7 +24,7 @@ void ajouter_debut(Liste* liste, int valeur) {
 void ajouter_fin(Liste* liste, int valeur) {
     if (!liste) return;
     
-    Noeud* nouveau = (Noeud*)malloc(sizeof(Noeud));
+    NoeudListe* nouveau = (NoeudListe*)malloc(sizeof(NoeudListe));
     if (!nouveau) return;
     
     nouveau->valeur = valeur;
@@ -33,7 +33,7 @@ void ajouter_fin(Liste* liste, int valeur) {
     if (!liste->tete) {
         liste->tete = nouveau;
     } else {
-        Noeud* courant = liste->tete;
+        NoeudListe* courant = liste->tete;
         while (courant->suivant) {
             courant = courant->suivant;
         }
@@ -45,7 +45,7 @@ void ajouter_fin(Liste* liste, int valeur) {
 int supprimer_debut(Liste* liste) {
     if (!liste || !liste->tete) return -1;
     
-    Noeud* temp = liste->tete;
+    NoeudListe* temp = liste->tete;
     int valeur = temp->valeur;
     liste->tete = liste->tete->suivant;
     free(temp);
@@ -64,7 +64,7 @@ void afficher_liste(Liste* liste) {
         return;
     }
     
-    Noeud* courant = liste->tete;
+    NoeudListe* courant = liste->tete;
     printf("Liste: ");
     while (courant) {
         printf("%d ", courant->valeur);
@@ -77,9 +77,9 @@ void afficher_liste(Liste* liste) {
 void liberer_liste(Liste* liste) {
     if (!liste) return;
     
-    Noeud* courant = liste->tete;
+    NoeudListe* courant = liste->tete;
     while (courant) {
-        Noeud* temp = courant;
+        NoeudListe* temp = courant;
         courant = courant->suivant;
         free(temp);
     }
@@ -89,7 +89,7 @@ void liberer_liste(Liste* liste) {
 int contient(Liste* liste, int valeur) {
     if (!liste) return 0;
     
-    Noeud* courant = liste->tete;
+    NoeudListe* courant = liste->tete;
     while (courant) {
         if (courant->valeur == valeur) return 1;
         courant = courant->suivant;

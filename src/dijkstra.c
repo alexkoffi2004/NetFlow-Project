@@ -19,17 +19,17 @@ static int trouver_min_distance(int* distances, int* visite, int nb_sommets) {
 }
 
 CheminResult* dijkstra(Graphe* g, int source, int destination) {
-    if (!g || source < 0 || source >= g->nb_sommets || 
-        destination < 0 || destination >= g->nb_sommets) {
+    if (!g || source < 0 || source >= g->nb_noeuds || 
+        destination < 0 || destination >= g->nb_noeuds) {
         return NULL;
     }
     
     CheminResult* resultat = (CheminResult*)malloc(sizeof(CheminResult));
     if (!resultat) return NULL;
     
-    resultat->distances = (int*)malloc(g->nb_sommets * sizeof(int));
-    resultat->predecesseurs = (int*)malloc(g->nb_sommets * sizeof(int));
-    int* visite = (int*)calloc(g->nb_sommets, sizeof(int));
+    resultat->distances = (int*)malloc(g->nb_noeuds * sizeof(int));
+    resultat->predecesseurs = (int*)malloc(g->nb_noeuds * sizeof(int));
+    int* visite = (int*)calloc(g->nb_noeuds, sizeof(int));
     
     if (!resultat->distances || !resultat->predecesseurs || !visite) {
         free(resultat->distances);
@@ -39,21 +39,21 @@ CheminResult* dijkstra(Graphe* g, int source, int destination) {
         return NULL;
     }
     
-    for (int i = 0; i < g->nb_sommets; i++) {
+    for (int i = 0; i < g->nb_noeuds; i++) {
         resultat->distances[i] = INFINI;
         resultat->predecesseurs[i] = -1;
     }
     
     resultat->distances[source] = 0;
     
-    for (int count = 0; count < g->nb_sommets - 1; count++) {
-        int u = trouver_min_distance(resultat->distances, visite, g->nb_sommets);
+    for (int count = 0; count < g->nb_noeuds - 1; count++) {
+        int u = trouver_min_distance(resultat->distances, visite, g->nb_noeuds);
         
         if (u == -1 || resultat->distances[u] == INFINI) break;
         
         visite[u] = 1;
         
-        Arete* arete = g->sommets[u].aretes;
+        Arete* arete = g->noeuds[u].aretes;
         while (arete) {
             int v = arete->destination;
             if (!visite[v] && resultat->distances[u] != INFINI) {
@@ -144,16 +144,16 @@ int* reconstruire_chemin(CheminResult* resultat, int source, int destination, in
 }
 
 CheminResult* bellman_ford(Graphe* g, int source, int destination) {
-    if (!g || source < 0 || source >= g->nb_sommets || 
-        destination < 0 || destination >= g->nb_sommets) {
+    if (!g || source < 0 || source >= g->nb_noeuds || 
+        destination < 0 || destination >= g->nb_noeuds) {
         return NULL;
     }
     
     CheminResult* resultat = (CheminResult*)malloc(sizeof(CheminResult));
     if (!resultat) return NULL;
     
-    resultat->distances = (int*)malloc(g->nb_sommets * sizeof(int));
-    resultat->predecesseurs = (int*)malloc(g->nb_sommets * sizeof(int));
+    resultat->distances = (int*)malloc(g->nb_noeuds * sizeof(int));
+    resultat->predecesseurs = (int*)malloc(g->nb_noeuds * sizeof(int));
     
     if (!resultat->distances || !resultat->predecesseurs) {
         free(resultat->distances);
@@ -162,7 +162,7 @@ CheminResult* bellman_ford(Graphe* g, int source, int destination) {
         return NULL;
     }
     
-    for (int i = 0; i < g->nb_sommets; i++) {
+    for (int i = 0; i < g->nb_noeuds; i++) {
         resultat->distances[i] = INFINI;
         resultat->predecesseurs[i] = -1;
     }
@@ -170,11 +170,11 @@ CheminResult* bellman_ford(Graphe* g, int source, int destination) {
     resultat->distances[source] = 0;
     resultat->a_cycle_negatif = 0;
     
-    for (int i = 0; i < g->nb_sommets - 1; i++) {
-        for (int u = 0; u < g->nb_sommets; u++) {
+    for (int i = 0; i < g->nb_noeuds - 1; i++) {
+        for (int u = 0; u < g->nb_noeuds; u++) {
             if (resultat->distances[u] == INFINI) continue;
             
-            Arete* arete = g->sommets[u].aretes;
+            Arete* arete = g->noeuds[u].aretes;
             while (arete) {
                 int v = arete->destination;
                 int poids = arete->latence;
@@ -189,10 +189,10 @@ CheminResult* bellman_ford(Graphe* g, int source, int destination) {
         }
     }
     
-    for (int u = 0; u < g->nb_sommets; u++) {
+    for (int u = 0; u < g->nb_noeuds; u++) {
         if (resultat->distances[u] == INFINI) continue;
         
-        Arete* arete = g->sommets[u].aretes;
+        Arete* arete = g->noeuds[u].aretes;
         while (arete) {
             int v = arete->destination;
             int poids = arete->latence;
@@ -260,7 +260,7 @@ static void trouver_chemins_recursif(Graphe* g, int courant, int destination,
             }
         }
     } else {
-        Arete* arete = g->sommets[courant].aretes;
+        Arete* arete = g->noeuds[courant].aretes;
         while (arete && *nb_chemins < k * 2) {
             if (!visite[arete->destination]) {
                 trouver_chemins_recursif(g, arete->destination, destination, visite,
@@ -275,8 +275,8 @@ static void trouver_chemins_recursif(Graphe* g, int courant, int destination,
 }
 
 KCheminsResult* k_plus_courts_chemins(Graphe* g, int source, int destination, int k) {
-    if (!g || source < 0 || source >= g->nb_sommets || 
-        destination < 0 || destination >= g->nb_sommets || k <= 0) {
+    if (!g || source < 0 || source >= g->nb_noeuds || 
+        destination < 0 || destination >= g->nb_noeuds || k <= 0) {
         return NULL;
     }
     
@@ -287,8 +287,8 @@ KCheminsResult* k_plus_courts_chemins(Graphe* g, int source, int destination, in
     resultat->nb_chemins = 0;
     resultat->k = k;
     
-    int* visite = (int*)calloc(g->nb_sommets, sizeof(int));
-    int* chemin_actuel = (int*)malloc(g->nb_sommets * sizeof(int));
+    int* visite = (int*)calloc(g->nb_noeuds, sizeof(int));
+    int* chemin_actuel = (int*)malloc(g->nb_noeuds * sizeof(int));
     
     if (!visite || !chemin_actuel) {
         free(visite);

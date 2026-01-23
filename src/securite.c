@@ -6,13 +6,13 @@
 static int est_point_critique(Graphe* g, int sommet, int source, int destination) {
     if (sommet == source || sommet == destination) return 0;
     
-    Graphe* g_temp = creer_graphe(g->nb_sommets);
+    Graphe* g_temp = creer_graphe(g->nb_noeuds);
     if (!g_temp) return 0;
     
-    for (int i = 0; i < g->nb_sommets; i++) {
+    for (int i = 0; i < g->nb_noeuds; i++) {
         if (i == sommet) continue;
         
-        Arete* arete = g->sommets[i].aretes;
+        Arete* arete = g->noeuds[i].aretes;
         while (arete) {
             if (arete->destination != sommet) {
                 ajouter_arete(g_temp, i, arete->destination, arete->latence, arete->bande_passante, arete->cout, arete->securite);
@@ -37,7 +37,7 @@ static void dfs_articulation(Graphe* g, int u, int* visite, int* disc, int* low,
     visite[u] = 1;
     disc[u] = low[u] = ++(*temps);
     
-    Arete* arete = g->sommets[u].aretes;
+    Arete* arete = g->noeuds[u].aretes;
     while (arete) {
         int v = arete->destination;
         
@@ -70,11 +70,11 @@ int* identifier_points_critiques(Graphe* g, int* nb_points) {
     if (!g || !nb_points) return NULL;
     
     *nb_points = 0;
-    int* visite = (int*)calloc(g->nb_sommets, sizeof(int));
-    int* disc = (int*)malloc(g->nb_sommets * sizeof(int));
-    int* low = (int*)malloc(g->nb_sommets * sizeof(int));
-    int* parent = (int*)malloc(g->nb_sommets * sizeof(int));
-    int* est_articulation = (int*)calloc(g->nb_sommets, sizeof(int));
+    int* visite = (int*)calloc(g->nb_noeuds, sizeof(int));
+    int* disc = (int*)malloc(g->nb_noeuds * sizeof(int));
+    int* low = (int*)malloc(g->nb_noeuds * sizeof(int));
+    int* parent = (int*)malloc(g->nb_noeuds * sizeof(int));
+    int* est_articulation = (int*)calloc(g->nb_noeuds, sizeof(int));
     
     if (!visite || !disc || !low || !parent || !est_articulation) {
         free(visite);
@@ -85,18 +85,18 @@ int* identifier_points_critiques(Graphe* g, int* nb_points) {
         return NULL;
     }
     
-    for (int i = 0; i < g->nb_sommets; i++) {
+    for (int i = 0; i < g->nb_noeuds; i++) {
         parent[i] = -1;
     }
     
     int temps = 0;
-    for (int i = 0; i < g->nb_sommets; i++) {
+    for (int i = 0; i < g->nb_noeuds; i++) {
         if (!visite[i]) {
             dfs_articulation(g, i, visite, disc, low, parent, est_articulation, &temps);
         }
     }
     
-    for (int i = 0; i < g->nb_sommets; i++) {
+    for (int i = 0; i < g->nb_noeuds; i++) {
         if (est_articulation[i]) {
             (*nb_points)++;
         }
@@ -106,7 +106,7 @@ int* identifier_points_critiques(Graphe* g, int* nb_points) {
     if (*nb_points > 0) {
         points = (int*)malloc(*nb_points * sizeof(int));
         int index = 0;
-        for (int i = 0; i < g->nb_sommets; i++) {
+        for (int i = 0; i < g->nb_noeuds; i++) {
             if (est_articulation[i]) {
                 points[index++] = i;
             }
@@ -129,8 +129,8 @@ int** identifier_ponts(Graphe* g, int* nb_ponts) {
 }
 
 int verifier_connectivite(Graphe* g, int source, int destination) {
-    if (!g || source < 0 || source >= g->nb_sommets || 
-        destination < 0 || destination >= g->nb_sommets) {
+    if (!g || source < 0 || source >= g->nb_noeuds || 
+        destination < 0 || destination >= g->nb_noeuds) {
         return 0;
     }
     
@@ -156,15 +156,15 @@ double calculer_fiabilite(Graphe* g, int source, int destination) {
     }
     
     int nb_aretes_totales = 0;
-    for (int i = 0; i < g->nb_sommets; i++) {
-        Arete* arete = g->sommets[i].aretes;
+    for (int i = 0; i < g->nb_noeuds; i++) {
+        Arete* arete = g->noeuds[i].aretes;
         while (arete) {
             nb_aretes_totales++;
             arete = arete->suivant;
         }
     }
     
-    double densite = (double)nb_aretes_totales / (g->nb_sommets * (g->nb_sommets - 1));
+    double densite = (double)nb_aretes_totales / (g->nb_noeuds * (g->nb_noeuds - 1));
     fiabilite *= (0.5 + 0.5 * densite);
     
     free(points);
@@ -180,7 +180,7 @@ AnalyseSecurite* analyser_securite(Graphe* g) {
     analyse->points_critiques = identifier_points_critiques(g, &analyse->nb_points_critiques);
     analyse->chemins_redondants = NULL;
     analyse->nb_chemins_redondants = 0;
-    analyse->fiabilite_globale = calculer_fiabilite(g, 0, g->nb_sommets - 1);
+    analyse->fiabilite_globale = calculer_fiabilite(g, 0, g->nb_noeuds - 1);
     
     return analyse;
 }
@@ -230,7 +230,7 @@ static int dfs_cycle_util(Graphe* g, int sommet, int* visite, int* pile_recursio
     pile_recursion[sommet] = 1;
     chemin[profondeur] = sommet;
     
-    Arete* arete = g->sommets[sommet].aretes;
+    Arete* arete = g->noeuds[sommet].aretes;
     while (arete) {
         int voisin = arete->destination;
         
@@ -278,9 +278,9 @@ CycleInfo* detecter_cycles_dfs(Graphe* g) {
     info->nb_cycles = 0;
     info->a_cycles = 0;
     
-    int* visite = (int*)calloc(g->nb_sommets, sizeof(int));
-    int* pile_recursion = (int*)calloc(g->nb_sommets, sizeof(int));
-    int* chemin = (int*)malloc(g->nb_sommets * sizeof(int));
+    int* visite = (int*)calloc(g->nb_noeuds, sizeof(int));
+    int* pile_recursion = (int*)calloc(g->nb_noeuds, sizeof(int));
+    int* chemin = (int*)malloc(g->nb_noeuds * sizeof(int));
     
     if (!visite || !pile_recursion || !chemin) {
         free(visite);
@@ -290,7 +290,7 @@ CycleInfo* detecter_cycles_dfs(Graphe* g) {
         return NULL;
     }
     
-    for (int i = 0; i < g->nb_sommets; i++) {
+    for (int i = 0; i < g->nb_noeuds; i++) {
         if (!visite[i]) {
             dfs_cycle_util(g, i, visite, pile_recursion, chemin, 0, info);
         }
@@ -314,14 +314,14 @@ CycleInfo* detecter_cycles_bfs(Graphe* g) {
     info->nb_cycles = 0;
     info->a_cycles = 0;
     
-    int* degre_entrant = (int*)calloc(g->nb_sommets, sizeof(int));
+    int* degre_entrant = (int*)calloc(g->nb_noeuds, sizeof(int));
     if (!degre_entrant) {
         free(info);
         return NULL;
     }
     
-    for (int i = 0; i < g->nb_sommets; i++) {
-        Arete* arete = g->sommets[i].aretes;
+    for (int i = 0; i < g->nb_noeuds; i++) {
+        Arete* arete = g->noeuds[i].aretes;
         while (arete) {
             degre_entrant[arete->destination]++;
             arete = arete->suivant;
@@ -329,7 +329,7 @@ CycleInfo* detecter_cycles_bfs(Graphe* g) {
     }
     
     Liste* file = creer_liste();
-    for (int i = 0; i < g->nb_sommets; i++) {
+    for (int i = 0; i < g->nb_noeuds; i++) {
         if (degre_entrant[i] == 0) {
             ajouter_fin(file, i);
         }
@@ -340,7 +340,7 @@ CycleInfo* detecter_cycles_bfs(Graphe* g) {
         int u = supprimer_debut(file);
         count++;
         
-        Arete* arete = g->sommets[u].aretes;
+        Arete* arete = g->noeuds[u].aretes;
         while (arete) {
             degre_entrant[arete->destination]--;
             if (degre_entrant[arete->destination] == 0) {
@@ -350,7 +350,7 @@ CycleInfo* detecter_cycles_bfs(Graphe* g) {
         }
     }
     
-    if (count != g->nb_sommets) {
+    if (count != g->nb_noeuds) {
         info->a_cycles = 1;
     }
     
@@ -398,7 +398,7 @@ static void tarjan_dfs(Graphe* g, int u, int* disc, int* low, int* sur_pile,
     ajouter_debut(pile, u);
     sur_pile[u] = 1;
     
-    Arete* arete = g->sommets[u].aretes;
+    Arete* arete = g->noeuds[u].aretes;
     while (arete) {
         int v = arete->destination;
         
@@ -412,7 +412,7 @@ static void tarjan_dfs(Graphe* g, int u, int* disc, int* low, int* sur_pile,
     }
     
     if (low[u] == disc[u]) {
-        int* composante = (int*)malloc(g->nb_sommets * sizeof(int));
+        int* composante = (int*)malloc(g->nb_noeuds * sizeof(int));
         int taille = 0;
         int w;
         
@@ -446,9 +446,9 @@ ComposanteFC* tarjan_composantes_fortement_connexes(Graphe* g) {
     result->tailles = NULL;
     result->nb_composantes = 0;
     
-    int* disc = (int*)malloc(g->nb_sommets * sizeof(int));
-    int* low = (int*)malloc(g->nb_sommets * sizeof(int));
-    int* sur_pile = (int*)calloc(g->nb_sommets, sizeof(int));
+    int* disc = (int*)malloc(g->nb_noeuds * sizeof(int));
+    int* low = (int*)malloc(g->nb_noeuds * sizeof(int));
+    int* sur_pile = (int*)calloc(g->nb_noeuds, sizeof(int));
     Liste* pile = creer_liste();
     
     if (!disc || !low || !sur_pile || !pile) {
@@ -460,13 +460,13 @@ ComposanteFC* tarjan_composantes_fortement_connexes(Graphe* g) {
         return NULL;
     }
     
-    for (int i = 0; i < g->nb_sommets; i++) {
+    for (int i = 0; i < g->nb_noeuds; i++) {
         disc[i] = -1;
         low[i] = -1;
     }
     
     int temps = 0;
-    for (int i = 0; i < g->nb_sommets; i++) {
+    for (int i = 0; i < g->nb_noeuds; i++) {
         if (disc[i] == -1) {
             tarjan_dfs(g, i, disc, low, sur_pile, pile, &temps, result);
         }

@@ -20,7 +20,7 @@ static void backtrack_recursif(Graphe* g, int courant, int destination,
         (*longueurs)[*nb_chemins] = profondeur + 1;
         (*nb_chemins)++;
     } else {
-        Arete* arete = g->sommets[courant].aretes;
+        Arete* arete = g->noeuds[courant].aretes;
         while (arete) {
             if (!visite[arete->destination]) {
                 backtrack_recursif(g, arete->destination, destination, visite, 
@@ -35,8 +35,8 @@ static void backtrack_recursif(Graphe* g, int courant, int destination,
 }
 
 Solution* trouver_tous_chemins(Graphe* g, int source, int destination) {
-    if (!g || source < 0 || source >= g->nb_sommets || 
-        destination < 0 || destination >= g->nb_sommets) {
+    if (!g || source < 0 || source >= g->nb_noeuds || 
+        destination < 0 || destination >= g->nb_noeuds) {
         return NULL;
     }
     
@@ -48,8 +48,8 @@ Solution* trouver_tous_chemins(Graphe* g, int source, int destination) {
     sol->nb_chemins = 0;
     sol->debit_total = 0;
     
-    int* visite = (int*)calloc(g->nb_sommets, sizeof(int));
-    int* chemin_actuel = (int*)malloc(g->nb_sommets * sizeof(int));
+    int* visite = (int*)calloc(g->nb_noeuds, sizeof(int));
+    int* chemin_actuel = (int*)malloc(g->nb_noeuds * sizeof(int));
     
     if (!visite || !chemin_actuel) {
         free(visite);
@@ -82,7 +82,7 @@ Solution* optimiser_flux(Graphe* g, int source, int destination, int debit_requi
             int u = sol->chemins[i][j];
             int v = sol->chemins[i][j + 1];
             
-            Arete* arete = g->sommets[u].aretes;
+            Arete* arete = g->noeuds[u].aretes;
             while (arete) {
                 if (arete->destination == v) {
                     int capacite_dispo = arete->bande_passante - arete->debit;
@@ -103,7 +103,7 @@ Solution* optimiser_flux(Graphe* g, int source, int destination, int debit_requi
                 int u = sol->chemins[i][j];
                 int v = sol->chemins[i][j + 1];
                 
-                Arete* arete = g->sommets[u].aretes;
+                Arete* arete = g->noeuds[u].aretes;
                 while (arete) {
                     if (arete->destination == v) {
                         arete->debit += flux;
@@ -193,7 +193,7 @@ static int verifier_contraintes_chemin(Graphe* g, int* chemin, int longueur, Con
             return 0;
         }
         
-        Arete* arete = g->sommets[u].aretes;
+        Arete* arete = g->noeuds[u].aretes;
         int trouve = 0;
         while (arete) {
             if (arete->destination == v) {
@@ -254,7 +254,7 @@ static void backtrack_contraintes(Graphe* g, int courant, int destination,
                 
                 int cout = 0, bp_min = INT_MAX, sec_min = INT_MAX;
                 for (int i = 0; i < profondeur; i++) {
-                    Arete* a = g->sommets[chemin[i]].aretes;
+                    Arete* a = g->noeuds[chemin[i]].aretes;
                     while (a) {
                         if (a->destination == chemin[i + 1]) {
                             cout += a->cout;
@@ -271,7 +271,7 @@ static void backtrack_contraintes(Graphe* g, int courant, int destination,
             }
         }
     } else {
-        Arete* arete = g->sommets[courant].aretes;
+        Arete* arete = g->noeuds[courant].aretes;
         while (arete) {
             if (!visite[arete->destination]) {
                 if (!verifier_nud_obligatoire(c->nuds_exclus, c->nb_nuds_exclus, arete->destination)) {
@@ -294,8 +294,8 @@ CheminContraint* trouver_chemin_avec_contraintes(Graphe* g, int source, int dest
     if (!g || !contraintes) return NULL;
     
     CheminContraint* meilleur = NULL;
-    int* visite = (int*)calloc(g->nb_sommets, sizeof(int));
-    int* chemin = (int*)malloc(g->nb_sommets * sizeof(int));
+    int* visite = (int*)calloc(g->nb_noeuds, sizeof(int));
+    int* chemin = (int*)malloc(g->nb_noeuds * sizeof(int));
     
     if (!visite || !chemin) {
         free(visite);
@@ -338,13 +338,13 @@ void liberer_chemin_contraint(CheminContraint* chemin) {
     free(chemin);
 }
 
-FilePriorite* creer_file_priorite(int capacite_max) {
-    FilePriorite* file = (FilePriorite*)malloc(sizeof(FilePriorite));
+FileAttente* creer_file_priorite(int capacite_max) {
+    FileAttente* file = (FileAttente*)malloc(sizeof(FileAttente));
     if (!file) return NULL;
     
     file->tete = NULL;
     file->queue = NULL;
-    file->taille = 0;
+    file->taille_actuelle = 0;
     file->capacite_max = capacite_max;
     file->paquets_perdus = 0;
     file->paquets_traites = 0;
@@ -353,10 +353,10 @@ FilePriorite* creer_file_priorite(int capacite_max) {
     return file;
 }
 
-int enqueue(FilePriorite* file, int id, int priorite, int taille, double temps_arrivee) {
+int enqueue(FileAttente* file, int id, int priorite, float taille_Mo, int source, int destination, double temps_arrivee) {
     if (!file) return 0;
     
-    if (file->capacite_max > 0 && file->taille >= file->capacite_max) {
+    if (file->capacite_max > 0 && file->taille_actuelle >= file->capacite_max) {
         file->paquets_perdus++;
         return 0;
     }
@@ -366,7 +366,9 @@ int enqueue(FilePriorite* file, int id, int priorite, int taille, double temps_a
     
     nouveau->id = id;
     nouveau->priorite = priorite;
-    nouveau->taille = taille;
+    nouveau->taille_Mo = taille_Mo;
+    nouveau->source = source;
+    nouveau->destination = destination;
     nouveau->temps_arrivee = temps_arrivee;
     nouveau->temps_traitement = 0.0;
     nouveau->suivant = NULL;
@@ -399,11 +401,11 @@ int enqueue(FilePriorite* file, int id, int priorite, int taille, double temps_a
         }
     }
     
-    file->taille++;
+    file->taille_actuelle++;
     return 1;
 }
 
-Paquet* dequeue(FilePriorite* file) {
+Paquet* dequeue(FileAttente* file) {
     if (!file || !file->tete) return NULL;
     
     Paquet* paquet = file->tete;
@@ -415,7 +417,7 @@ Paquet* dequeue(FilePriorite* file) {
         file->queue = NULL;
     }
     
-    file->taille--;
+    file->taille_actuelle--;
     file->paquets_traites++;
     
     paquet->suivant = NULL;
@@ -424,25 +426,25 @@ Paquet* dequeue(FilePriorite* file) {
     return paquet;
 }
 
-Paquet* peek(FilePriorite* file) {
+Paquet* peek(FileAttente* file) {
     if (!file) return NULL;
     return file->tete;
 }
 
-int est_vide_file(FilePriorite* file) {
-    return (!file || file->taille == 0);
+int est_vide_file(FileAttente* file) {
+    return (!file || file->taille_actuelle == 0);
 }
 
-int est_pleine_file(FilePriorite* file) {
+int est_pleine_file(FileAttente* file) {
     if (!file || file->capacite_max <= 0) return 0;
-    return (file->taille >= file->capacite_max);
+    return (file->taille_actuelle >= file->capacite_max);
 }
 
-void afficher_file(FilePriorite* file) {
+void afficher_file(FileAttente* file) {
     if (!file) return;
     
     printf("\n=== File de Priorite ===\n");
-    printf("Taille: %d", file->taille);
+    printf("Taille: %d", file->taille_actuelle);
     if (file->capacite_max > 0) {
         printf(" / %d", file->capacite_max);
     }
@@ -458,12 +460,12 @@ void afficher_file(FilePriorite* file) {
     int pos = 1;
     while (courant) {
         printf("%d. Paquet #%d (priorite: %d, taille: %d octets)\n",
-               pos++, courant->id, courant->priorite, courant->taille);
+               pos++, courant->id, courant->priorite, courant->taille_Mo);
         courant = courant->suivant;
     }
 }
 
-void liberer_file_priorite(FilePriorite* file) {
+void liberer_file_priorite(FileAttente* file) {
     if (!file) return;
     
     Paquet* courant = file->tete;
@@ -501,7 +503,7 @@ StatistiquesSimulation* simuler_flux_paquets(Graphe* g, int source, int destinat
     stats->taux_perte = 0.0;
     stats->debit_effectif = 0.0;
     
-    FilePriorite* file = creer_file_priorite(capacite_file);
+    FileAttente* file = creer_file_priorite(capacite_file);
     if (!file) {
         free(stats);
         return NULL;
@@ -523,17 +525,17 @@ StatistiquesSimulation* simuler_flux_paquets(Graphe* g, int source, int destinat
     
     for (int i = 0; i < nb_paquets; i++) {
         int priorite = generer_priorite_aleatoire();
-        int taille = generer_taille_aleatoire();
+        float taille = (float)generer_taille_aleatoire() / 1000000.0;
         double temps_arrivee = temps_actuel + generer_temps_aleatoire();
         
-        if (enqueue(file, i, priorite, taille, temps_arrivee)) {
+        if (enqueue(file, i, priorite, taille, source, destination, temps_arrivee)) {
             Paquet* paquet = dequeue(file);
             if (paquet) {
                 double temps_attente = temps_actuel - paquet->temps_arrivee;
                 if (temps_attente < 0) temps_attente = 0;
                 
                 temps_attente_total += temps_attente;
-                octets_totaux += paquet->taille;
+                octets_totaux += (int)(paquet->taille_Mo * 1000000);
                 stats->paquets_recus++;
                 
                 free(paquet);
@@ -552,7 +554,7 @@ StatistiquesSimulation* simuler_flux_paquets(Graphe* g, int source, int destinat
             if (temps_attente < 0) temps_attente = 0;
             
             temps_attente_total += temps_attente;
-            octets_totaux += paquet->taille;
+            octets_totaux += (int)(paquet->taille_Mo * 1000000);
             stats->paquets_recus++;
             
             free(paquet);
